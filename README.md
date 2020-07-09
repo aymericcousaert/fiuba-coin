@@ -1,5 +1,5 @@
-1. Deploy Fuc contract on an address
+1. Deploy Fuc contract and Admin contract with address
 
-2. Deploy Admin contract on another address
+2. Set el address del contract Fuc with setAddress en el contract Admin
 
-3. Set el address del coin with setAddress
+3. Other functions can be used with right user address (check logs in revert case)
