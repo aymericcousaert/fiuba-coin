@@ -1,4 +1,4 @@
-1. Deploy Fuc contract and Admin contract with address
+1. Deploy Fuc contract and Admin contract with same address
 
 2. Set el address del contract Fuc with setAddress en el contract Admin
 
