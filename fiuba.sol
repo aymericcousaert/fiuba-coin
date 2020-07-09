@@ -10,22 +10,28 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.3.0/contr
 
 contract Fuc is ERC20, ERC20Detailed {
     constructor() ERC20() ERC20Detailed("FIUBA-COIN", "FUC",18) public {
-        _mint(msg.sender, 1000000);
     }
+    
+    function giveStudentCredits(address _student, uint _credits) public {
+        _mint(_student, _credits);
+    }
+    
 }
  
 contract Admin {
     
+    event log(string _comment);
+    event logInt(uint);
+    
     address coinAddress;
+    address owner = msg.sender;
     Fuc token;
     
-    function setCoinAddress(address _coinAddress) external {
+    function setCoinAddress(address _coinAddress) external onlyOwner {
         coinAddress = _coinAddress;
         token = Fuc(_coinAddress);
     }
     
-     
-       
     struct Course {
         uint id;
         string name;
@@ -35,7 +41,6 @@ contract Admin {
         bool active;
     }
  
-    uint CoursesCount;
     Course[] public courses;
     
     struct courseRegistered {
@@ -47,17 +52,16 @@ contract Admin {
     
     courseRegistered[] public studentStates;
     
-    event log(string _comment);
-    event logCredits(uint);
-    
     function getCourseCorrelatives(uint _id) public view returns(uint[] memory) {
-        for (uint i = 0; i < CoursesCount; i++) {
+        for (uint i = 0; i < courses.length; i++) {
             Course storage elem = courses[i];
             if (elem.id == _id) {
                 return (elem.correlatives);
             }
         }
     }
+    
+    event logAddress(address);
     
     function createCourse(uint _id, string memory _name, address _professor, uint _credits, uint[] memory _correlatives, bool _active) public onlyOwner {
         bool push = true;
@@ -67,7 +71,6 @@ contract Admin {
             }
         }
         if (push) {
-            CoursesCount++;
             courses.push(Course(_id, _name, _professor, _credits, _correlatives, _active));
         } else {
             emit log("There is already a course with this id.");
@@ -123,26 +126,17 @@ contract Admin {
                 credits = courses[i].credits;
             }
         }
-        emit logCredits(credits);
         if (_presenceOnly) {
-            token.transferFrom(coinAddress,_student,credits/2);
+            token.giveStudentCredits(_student,credits/2);
         }
         if (!_presenceOnly) {
-            token.transferFrom(coinAddress,_student,credits);
+            token.giveStudentCredits(_student,credits);
         }
-    }
-    
-    function transfer(address _professor) public onlyCoinOwner {
-        token.transfer(_professor,20);
-    }
-    
-    function test() public {
-        token.approve(owner, 20);
     }
 
     function checkState(uint _id) public {
         for (uint i = 0; i < studentStates.length; i++) {
-            if (studentStates[i].id == _id && (now - studentStates[i].approvalDate) > 44496000) {
+            if (studentStates[i].id == _id && (now - studentStates[i].approvalDate) > 44496000) { // 44496000 is 1,5 year 
                 remove(i);
             }
         }
@@ -150,14 +144,10 @@ contract Admin {
     
     function remove(uint index) private {
         if (index >= studentStates.length) return;
-
-        for (uint i = index; i<studentStates.length-1; i++){
+        for (uint i = index; i < studentStates.length - 1; i++) {
             studentStates[i] = studentStates[i+1];
         }
-        studentStates.length--;
     }
-
-    address owner = msg.sender;
 
     modifier onlyOwner() {
         require(msg.sender == owner,"Only the owner of the contract can perform this action.");
@@ -175,14 +165,5 @@ contract Admin {
         require(msg.sender == professor,"Only the professor can perform this action.");
         _;
     }
-    
-    event logAddress(address);
-    
-    modifier onlyCoinOwner {
-        emit logAddress(msg.sender);
-        emit logAddress(coinAddress);
-        require(msg.sender == coinAddress,"Only the owner of the FUC token can perform this action.");
-        _;
-    }
-  
 }
+
